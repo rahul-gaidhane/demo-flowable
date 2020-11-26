@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import in.geomitra.example.domain.Approval;
-import in.geomitra.example.domain.Article;
+import in.geomitra.example.domain.ArticleInfo;
+import in.geomitra.example.domain.ArticleRequest;
 import in.geomitra.example.service.ArticleWorkflowService;
 
 @RestController
@@ -19,18 +20,13 @@ public class ArticleWorkflowController {
 	@Autowired
 	private ArticleWorkflowService service;
 	
-	@PostMapping("/deploy")
-	public void deploy() {
-		service.deploy();
-	}
-	
 	@PostMapping("/submit")
-	public void submit(@RequestBody Article article) {
+	public void submit(@RequestBody ArticleRequest article) {
 		service.startProcess(article);
 	}
 	
 	@GetMapping("/tasks")
-	public List<Article> getTasks(@RequestParam String assignee) {
+	public List<ArticleInfo> getTasks(@RequestParam String assignee) {
 		return service.getTasks(assignee);
 	}
 	

@@ -13,9 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import in.geomitra.example.domain.Approval;
 import in.geomitra.example.domain.Article;
+import in.geomitra.example.domain.ArticleInfo;
+import in.geomitra.example.domain.ArticleRequest;
+import in.geomitra.example.domain.Status;
+import in.geomitra.example.repository.ArticleRepository;
 
 @Service
 public class ArticleWorkflowService {
@@ -31,6 +36,9 @@ public class ArticleWorkflowService {
 	@Autowired
 	private RepositoryService repoService;
 	
+	@Autowired
+	private ArticleRepository articleRepository;
+	
 	public void deploy() {
 		LOGGER.info("Service to deploy process defination...");
 		
@@ -39,21 +47,33 @@ public class ArticleWorkflowService {
 					.deploy();
 	}
 	
-	public void startProcess(Article article) {
+	@Transactional
+	public void startProcess(ArticleRequest article) {
+		LOGGER.debug("Service to send article for review...");
+		
 		Map<String, Object> variables = new HashMap<>();
         variables.put("author", article.getAuthor());
         variables.put("url", article.getUrl());
-        runtimeService.startProcessInstanceById("articleReview", variables);
+        
+        Article art = new Article(null, article.getAuthor(), article.getUrl(), Status.APPROVAL_PENDING);
+        
+        Article savedArt = articleRepository.save(art);
+        
+        LOGGER.debug("art : " + savedArt);
+        
+        runtimeService.startProcessInstanceByKey("articleReview");
 	}
 
-	public List<Article> getTasks(String assignee) {
+	public List<ArticleInfo> getTasks(String assignee) {
+		LOGGER.debug("Service to get tasks...");
 		List<Task> tasks = taskService.createTaskQuery()
 				.taskCandidateGroup(assignee)
 				.list();
 		
+		LOGGER.debug("Number of tasks found : " + tasks.size());
 		return tasks.stream().map(task -> {
 			Map<String, Object> variables =	taskService.getVariables(task.getId());
-			return new Article(task.getId(), (String)variables.get("author"), (String) variables.get("url"));		
+			return new ArticleInfo(task.getId(), (String)variables.get("author"), (String) variables.get("url"));		
 		})
 		.collect(Collectors.toList());
 	}
