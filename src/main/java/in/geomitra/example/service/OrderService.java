@@ -22,6 +22,7 @@ import in.geomitra.example.domain.BatchOrder;
 import in.geomitra.example.domain.BatchOrderInfo;
 import in.geomitra.example.domain.OrderStatus;
 import in.geomitra.example.domain.PaymentStatus;
+import in.geomitra.example.domain.UpdateDuplicateStatus;
 import in.geomitra.example.mapper.BatchOrderMapper;
 import in.geomitra.example.repository.OrderRepository;
 import in.geomitra.example.request.UpdatePaymentStatus;
@@ -126,5 +127,39 @@ public class OrderService {
 		vars.put("order", ordInfo);
 		
 		runtimeService.startProcessInstanceByKey("orderProcess", vars);
+	}
+
+	public void updateDuplicateStatus(UpdateDuplicateStatus status) {
+		LOGGER.debug("Service to update duplicate status...");
+		
+		Map<String, Object> vars = new HashMap<>();
+		vars.put("isDuplicate", status.getDuplicateStatus());
+		
+		taskService.complete(status.getTaskId(), vars);
+	}
+	
+	public void suspendOrder(DelegateExecution exec) throws Exception {
+		LOGGER.debug("Service to suspend order...");
+		
+		BatchOrderInfo ordInfo = (BatchOrderInfo)exec.getVariable("order");
+		
+		BatchOrder ord = findOrder(ordInfo.getOrderId());
+		ord.setDuplicateStatus(DuplicateStatus.RESOLVE_DUPLICATE);
+		ord.setOrderStatus(OrderStatus.SUSPENDED);
+		
+		orderRepository.save(ord);
+	}
+	
+	public void createJob(DelegateExecution exec) throws Exception {
+		LOGGER.debug("Service to create job...");
+		
+		BatchOrderInfo ordInfo = (BatchOrderInfo)exec.getVariable("order");
+		
+		BatchOrder ord = findOrder(ordInfo.getOrderId());
+		
+		ord.setOrderStatus(OrderStatus.IN_PROCESS);
+		ord.setDuplicateStatus(DuplicateStatus.NO_DUPLICATE);
+		
+		orderRepository.save(ord);
 	}
 }

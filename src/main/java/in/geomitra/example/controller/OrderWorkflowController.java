@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import in.geomitra.example.domain.BatchOrderInfo;
+import in.geomitra.example.domain.UpdateDuplicateStatus;
 import in.geomitra.example.request.UpdatePaymentStatus;
 import in.geomitra.example.service.OrderService;
 
@@ -45,5 +46,12 @@ public class OrderWorkflowController {
 		LOGGER.debug("Service to get tasks...");
 		
 		return orderService.getTasks("rahul");
+	}
+	
+	@PutMapping("/duplicate")
+	public void updateDuplicateStatus(@RequestBody UpdateDuplicateStatus status) throws Exception {
+		LOGGER.debug("Request to update duplicate status...");
+		
+		orderService.updateDuplicateStatus(status);
 	}
 }
