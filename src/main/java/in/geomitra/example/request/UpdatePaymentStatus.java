@@ -15,7 +15,5 @@ public class UpdatePaymentStatus {
 	
 	private String id;
 	
-	private Long orderId;
-	
 	private Boolean status;
 }

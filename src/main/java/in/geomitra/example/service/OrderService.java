@@ -19,8 +19,10 @@ import com.github.javafaker.Faker;
 
 import in.geomitra.example.domain.DuplicateStatus;
 import in.geomitra.example.domain.BatchOrder;
-import in.geomitra.example.domain.OrderInfo;
+import in.geomitra.example.domain.BatchOrderInfo;
+import in.geomitra.example.domain.OrderStatus;
 import in.geomitra.example.domain.PaymentStatus;
+import in.geomitra.example.mapper.BatchOrderMapper;
 import in.geomitra.example.repository.OrderRepository;
 import in.geomitra.example.request.UpdatePaymentStatus;
 
@@ -39,25 +41,19 @@ public class OrderService {
 	private OrderRepository orderRepository;
 	
 	
-	public void updatePaymentStatus(UpdatePaymentStatus status) throws Exception {
-		LOGGER.debug("Service to update payment status...");
-		
-		Optional<BatchOrder> foundOrd = orderRepository.findById(status.getOrderId());
+	private BatchOrder findOrder(Long id) throws Exception {
+		Optional<BatchOrder> foundOrd = orderRepository.findById(id);
 		
 		if(foundOrd.isEmpty()) {
-			LOGGER.error("Order not found for the given order : " + status.getId());
-			throw new Exception("Order not found for the given order : " + status.getId());
+			LOGGER.error("Order not found for the given order : " + id);
+			throw new Exception("Order not found for the given order : " + id);
 		}
 		
-		BatchOrder ord = foundOrd.get();
-		
-		if(status.getStatus()) {
-			ord.setPaymentStatus(PaymentStatus.COMPLETED);
-		} else {
-			ord.setPaymentStatus(PaymentStatus.FAILED);
-		}
-		
-		orderRepository.save(ord);
+		return foundOrd.get();
+	}
+	
+	public void updatePaymentStatus(UpdatePaymentStatus status) throws Exception {
+		LOGGER.debug("Service to update payment status...");
 		
 		Map<String, Object> vars = new HashMap<>();
 		vars.put("paymentSuccess", status.getStatus());
@@ -65,7 +61,7 @@ public class OrderService {
 		taskService.complete(status.getId(), vars);
 	}
 	
-	public List<OrderInfo> getTasks(String assignee) {
+	public List<BatchOrderInfo> getTasks(String assignee) {
 		LOGGER.debug("Service to get tasks...");
 		List<Task> tasks = taskService.createTaskQuery()
 				.taskAssignee(assignee)
@@ -77,23 +73,36 @@ public class OrderService {
 			
 			Map<String, Object> vars =	taskService.getVariables(task.getId());
 			
-			return new OrderInfo(task.getId(), 
-									(String)vars.get("orderNumber"), 
-									(String)vars.get("address"), 
-									(PaymentStatus)vars.get("paymentStatus"), 
-									(DuplicateStatus)vars.get("duplicateStatus"),
-									(String)vars.get("createdBy"), 
-									(Long)vars.get("orderId"));		
+			BatchOrderInfo ordInfo = (BatchOrderInfo)vars.get("order");
+			
+			return new BatchOrderTaskInfo(ordInfo, task.getId());		
 		})
 		.collect(Collectors.toList());
 	}
 	
-	public void conformOrder(DelegateExecution exec) {
+	public void conformOrder(DelegateExecution exec) throws Exception {
 		LOGGER.debug("Service to conform order...");
+		
+		BatchOrderInfo ordInfo = (BatchOrderInfo)exec.getVariable("order");
+		
+		BatchOrder ord = findOrder(ordInfo.getOrderId());
+		
+		ord.setOrderStatus(OrderStatus.CONFIRMED);
+		ord.setPaymentStatus(PaymentStatus.COMPLETED);
+		
+		orderRepository.save(ord);
 	}
 	
-	public void paymentPending(DelegateExecution exec) {
+	public void paymentPending(DelegateExecution exec) throws Exception {
 		LOGGER.debug("Service to payment pending...");
+		
+		BatchOrderInfo ordInfo = (BatchOrderInfo)exec.getVariable("order");
+		
+		BatchOrder ord = findOrder(ordInfo.getOrderId());
+		
+		ord.setPaymentStatus(PaymentStatus.FAILED);
+		
+		orderRepository.save(ord);
 	}
 
 	public void create(String name) {
@@ -107,16 +116,14 @@ public class OrderService {
 		order.setOrderNumber(faker.regexify("G[0-9]{10}"));
 		order.setPaymentStatus(PaymentStatus.PENDING);
 		order.setCreatedBy(name);
+		order.setOrderStatus(OrderStatus.NOT_CONFIRMED);
 		
 		BatchOrder savedOrder = orderRepository.save(order);
 		
+		BatchOrderInfo ordInfo = BatchOrderMapper.toInfo(savedOrder);
+		
 		Map<String, Object> vars = new HashMap<>();
-		vars.put("address", order.getAddress());
-		vars.put("duplicateStatus", order.getDuplicateStatus());
-		vars.put("orderNumber", order.getOrderNumber());
-		vars.put("paymentStatus", order.getPaymentStatus());
-		vars.put("createdBy", order.getCreatedBy());
-		vars.put("orderId", savedOrder.getId());
+		vars.put("order", ordInfo);
 		
 		runtimeService.startProcessInstanceByKey("orderProcess", vars);
 	}

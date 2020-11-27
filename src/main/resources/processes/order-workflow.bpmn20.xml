@@ -34,7 +34,7 @@
 		/>
 		<sequenceFlow
 			sourceRef="decision"
-			targetRef="paymentSuccess"
+			targetRef="orderConform"
 		>
 			<conditionExpression
 				xsi:type="tFormalExpression"
@@ -55,13 +55,13 @@
 		 	</conditionExpression>
 		</sequenceFlow>
 		<serviceTask 
-			id="paymentSuccess"
+			id="orderConform"
 			name="Order conform"
 			flowable:expression="#{orderService.conformOrder(execution)}" 
 		/>
 		<sequenceFlow 
-			sourceRef="paymentSuccess"
-			targetRef="end" 
+			sourceRef="orderConform"
+			targetRef="checkDuplicate" 
 		/>
 		<serviceTask 
 			id="paymentFailed"
@@ -70,6 +70,58 @@
 		/>
 		<sequenceFlow 
 			sourceRef="paymentFailed"
+			targetRef="end"
+		/>
+		<userTask 
+			id="checkDuplicate"
+			name="check Duplicate"
+			flowable:assignee="rahul" 
+		/>
+		<sequenceFlow 
+			sourceRef="checkDuplicate"
+			targetRef="decideDuplicate" 
+		/>
+		<exclusiveGateway
+			id="decideDuplicate"
+		/>
+		<sequenceFlow
+			sourceRef="decideDuplicate"
+			targetRef="suspendOrder"
+		>
+			<conditionExpression
+				xsi:type="tFormalExpression"
+			>
+				<![CDATA[
+					${isDuplicate}
+				]]>
+			</conditionExpression>
+		</sequenceFlow>
+		<sequenceFlow
+			sourceRef="decideDuplicate"
+			targetRef="createJob"
+		>
+			<conditionExpression xsi:type="tFormalExpression">
+		        <![CDATA[
+		          ${!isDuplicate}
+		        ]]>
+		 	</conditionExpression>
+		</sequenceFlow>
+		<serviceTask 
+			id="suspendOrder"
+			name="Suspend Order"
+			flowable:expression="#{orderService.suspendOrder(execution)}"
+		/>
+		<sequenceFlow 
+			sourceRef="suspendOrder"
+			targetRef="end"
+		/>
+		<serviceTask 
+			id="createJob"
+			name="Create Job"
+			flowable:expression="#{orderService.createJob(execution)}"
+		/>
+		<sequenceFlow 
+			sourceRef="createJob"
 			targetRef="end"
 		/>
 		<endEvent 

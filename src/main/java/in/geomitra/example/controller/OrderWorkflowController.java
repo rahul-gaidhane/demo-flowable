@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import in.geomitra.example.domain.OrderInfo;
+import in.geomitra.example.domain.BatchOrderInfo;
 import in.geomitra.example.request.UpdatePaymentStatus;
 import in.geomitra.example.service.OrderService;
 
@@ -41,7 +41,7 @@ public class OrderWorkflowController {
 	}
 	
 	@GetMapping("/tasks")
-	public List<OrderInfo> getTasks() {
+	public List<BatchOrderInfo> getTasks() {
 		LOGGER.debug("Service to get tasks...");
 		
 		return orderService.getTasks("rahul");

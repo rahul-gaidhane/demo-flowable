@@ -1,5 +1,7 @@
 package in.geomitra.example.domain;
 
+import java.io.Serializable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,17 +13,16 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class OrderInfo {
+public class BatchOrderInfo implements Serializable {
 	
-	private String id;
-	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private String orderNumber;
 	
 	private String address;
-	
-	private PaymentStatus payStatus;
-	
-	private DuplicateStatus dupStatus;
 	
 	private String createdBy;
 	

@@ -35,4 +35,7 @@ public class BatchOrder {
 	private PaymentStatus paymentStatus;
 	
 	private String createdBy;
+	
+	@Enumerated(EnumType.STRING)
+	private OrderStatus orderStatus;
 }
