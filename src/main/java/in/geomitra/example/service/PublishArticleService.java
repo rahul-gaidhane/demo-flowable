@@ -3,7 +3,6 @@ package in.geomitra.example.service;
 import java.util.Optional;
 
 import org.flowable.engine.delegate.DelegateExecution;
-import org.flowable.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,15 +13,14 @@ import in.geomitra.example.domain.Status;
 import in.geomitra.example.repository.ArticleRepository;
 
 @Service
-public class PublishArticleService implements JavaDelegate {
+public class PublishArticleService {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PublishArticleService.class);
 	
 	@Autowired
 	private ArticleRepository articleRepository;
 	
-	@Override
-	public void execute(DelegateExecution execution) {
+	public void updateStatus(DelegateExecution execution) {
 		String auth = (String)execution.getVariable("author");
 		LOGGER.debug("auth : " + auth);
 		
@@ -33,6 +31,7 @@ public class PublishArticleService implements JavaDelegate {
 		LOGGER.debug("articleId : " + id);
 		
 		LOGGER.debug("repo bean : " + articleRepository);
+		
 		Optional<Article> foundArticle = articleRepository.findById(id);
 		
 		if(foundArticle.isEmpty()) {

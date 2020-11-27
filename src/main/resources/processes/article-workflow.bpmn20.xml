@@ -57,7 +57,7 @@
 		<serviceTask 
 			id="tutorialApproved"
 			name="Publish the approved tutorial."
-			flowable:class="in.geomitra.example.service.PublishArticleService" 
+			flowable:expression="#{publishArticleService.updateStatus(execution)}" 
 		/>
 		<sequenceFlow 
 			sourceRef="tutorialApproved"
