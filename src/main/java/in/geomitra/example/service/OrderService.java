@@ -17,13 +17,16 @@ import org.springframework.stereotype.Service;
 
 import com.github.javafaker.Faker;
 
-import in.geomitra.example.domain.DuplicateStatus;
 import in.geomitra.example.domain.BatchOrder;
 import in.geomitra.example.domain.BatchOrderInfo;
+import in.geomitra.example.domain.DuplicateStatus;
+import in.geomitra.example.domain.Job;
 import in.geomitra.example.domain.OrderStatus;
 import in.geomitra.example.domain.PaymentStatus;
 import in.geomitra.example.domain.UpdateDuplicateStatus;
 import in.geomitra.example.mapper.BatchOrderMapper;
+import in.geomitra.example.mapper.JobMapper;
+import in.geomitra.example.repository.JobRepository;
 import in.geomitra.example.repository.OrderRepository;
 import in.geomitra.example.request.UpdatePaymentStatus;
 
@@ -41,6 +44,8 @@ public class OrderService {
 	@Autowired
 	private OrderRepository orderRepository;
 	
+	@Autowired
+	private JobRepository jobRepository;
 	
 	private BatchOrder findOrder(Long id) throws Exception {
 		Optional<BatchOrder> foundOrd = orderRepository.findById(id);
@@ -161,5 +166,9 @@ public class OrderService {
 		ord.setDuplicateStatus(DuplicateStatus.NO_DUPLICATE);
 		
 		orderRepository.save(ord);
+		
+		Job job = JobMapper.toEntity(ord);
+		
+		Job savedJob = jobRepository.save(job);
 	}
 }
