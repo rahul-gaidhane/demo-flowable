@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+	xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+	xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+	xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+	xmlns:flowable="http://flowable.org/bpmn"
+	typeLanguage="http://www.w3.org/2001/XMLSchema"
+	expressionLanguage="http://www.w3.org/1999/XPath"
+	targetNamespace="http://www.flowable.org/processdef">
+	<process id="orderProcess"
+				name="A simple order process flow"
+				isExecutable="true">
+		<startEvent 
+			id="start"
+		/>
+		<sequenceFlow 
+			sourceRef="start" 
+			targetRef="conformPayment"
+		/>
+		<userTask 
+			id="conformPayment"
+			name="Get the payment status"
+			flowable:assignee="rahul"
+		/>
+		<sequenceFlow 
+			sourceRef="conformPayment"
+			targetRef="decision"
+		/>
+		<exclusiveGateway
+			id="decision"
+		/>
+		<sequenceFlow
+			sourceRef="decision"
+			targetRef="paymentSuccess"
+		>
+			<conditionExpression
+				xsi:type="tFormalExpression"
+			>
+				<![CDATA[
+					${paymentSuccess}
+				]]>
+			</conditionExpression>
+		</sequenceFlow>
+		<sequenceFlow
+			sourceRef="decision"
+			targetRef="paymentFailed"
+		>
+			<conditionExpression xsi:type="tFormalExpression">
+		        <![CDATA[
+		          ${!paymentSuccess}
+		        ]]>
+		 	</conditionExpression>
+		</sequenceFlow>
+		<serviceTask 
+			id="paymentSuccess"
+			name="Order conform"
+			flowable:expression="#{orderService.conformOrder(execution)}" 
+		/>
+		<sequenceFlow 
+			sourceRef="paymentSuccess"
+			targetRef="end" 
+		/>
+		<serviceTask 
+			id="paymentFailed"
+			name="Order Failed"
+			flowable:expression="#{orderService.paymentPending(execution)}"
+		/>
+		<sequenceFlow 
+			sourceRef="paymentFailed"
+			targetRef="end"
+		/>
+		<endEvent 
+			id="end"
+		/>
+	</process>
+</definitions>
