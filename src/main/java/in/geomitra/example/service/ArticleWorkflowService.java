@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.task.api.Task;
@@ -34,18 +33,7 @@ public class ArticleWorkflowService {
 	private TaskService taskService;
 	
 	@Autowired
-	private RepositoryService repoService;
-	
-	@Autowired
 	private ArticleRepository articleRepository;
-	
-	public void deploy() {
-		LOGGER.info("Service to deploy process defination...");
-		
-		repoService.createDeployment()
-					.addClasspathResource("processes/article-workflow.bpmn20.xml")
-					.deploy();
-	}
 	
 	@Transactional
 	public void startProcess(ArticleRequest article) {
@@ -60,8 +48,8 @@ public class ArticleWorkflowService {
         Article savedArt = articleRepository.save(art);
         
         LOGGER.debug("art : " + savedArt);
-        
-        runtimeService.startProcessInstanceByKey("articleReview");
+        variables.put("articleId", savedArt.getId());
+        runtimeService.startProcessInstanceByKey("articleReview", variables);
 	}
 
 	public List<ArticleInfo> getTasks(String assignee) {
@@ -79,6 +67,7 @@ public class ArticleWorkflowService {
 	}
 
 	public void submitReview(Approval approval) {
+		LOGGER.debug("Service to submit approval for article...");
 		Map<String, Object> variables = new HashMap<String, Object>();
 		variables.put("approved", approval.getStatus());
 		taskService.complete(approval.getId(), variables);
