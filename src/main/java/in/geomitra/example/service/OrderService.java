@@ -93,6 +93,11 @@ public class OrderService {
 		
 		BatchOrder ord = findOrder(ordInfo.getOrderId());
 		
+		if(ord.getCreatedBy().equals("Starlord")) {
+			LOGGER.error("Starlord error by me");
+			throw new Exception("Just an exception");
+		}
+		
 		ord.setOrderStatus(OrderStatus.CONFIRMED);
 		ord.setPaymentStatus(PaymentStatus.COMPLETED);
 		
@@ -170,5 +175,9 @@ public class OrderService {
 		Job job = JobMapper.toEntity(ord);
 		
 		Job savedJob = jobRepository.save(job);
+	}
+	
+	public void handleError(DelegateExecution exec) throws Exception {
+		LOGGER.debug("Service to handle error...");
 	}
 }

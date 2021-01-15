@@ -58,6 +58,26 @@
 			id="orderConform"
 			name="Order conform"
 			flowable:expression="#{orderService.conformOrder(execution)}" 
+		>
+			<extensionElements>
+				<flowable:mapException errorCode="myException"/>
+			</extensionElements>
+		</serviceTask>
+		<boundaryEvent id="orderConformError" attachedToRef="orderConform">
+		  <errorEventDefinition errorRef="myError"/>
+		</boundaryEvent>
+		<sequenceFlow
+			sourceRef="orderConformError"
+			targetRef="handleError"
+		/>
+		<serviceTask
+			id="handleError"
+			name="Handle Error"
+			flowable:expression="#{orderService.handleError(execution)}"
+		/>
+		<sequenceFlow
+			sourceRef="handleError"
+			targetRef="end"
 		/>
 		<sequenceFlow 
 			sourceRef="orderConform"
@@ -68,6 +88,7 @@
 			name="Order Failed"
 			flowable:expression="#{orderService.paymentPending(execution)}"
 		/>
+		
 		<sequenceFlow 
 			sourceRef="paymentFailed"
 			targetRef="end"
@@ -128,4 +149,5 @@
 			id="end"
 		/>
 	</process>
+	<error id="myError" errorCode="myException"/>
 </definitions>
